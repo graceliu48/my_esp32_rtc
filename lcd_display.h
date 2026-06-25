@@ -32,6 +32,8 @@ public:
   void clear(uint16_t color = COLOR_BLACK);
   void on();
   void off();
+  bool isOn() const { return _isOn; }
+  uint8_t getBrightness() const { return _brightness; }
 
 private:
   void writeCmd(uint8_t cmd);
@@ -48,6 +50,7 @@ private:
   SPIClass _spi;
   int8_t _cs, _dc, _rst, _bl;
   bool _initialized;
+  bool _isOn;
   uint8_t _brightness;
   String _lastDate, _lastTime, _lastWeekday, _lastStatus;
 };

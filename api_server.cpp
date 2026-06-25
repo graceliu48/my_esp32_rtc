@@ -101,9 +101,10 @@ void ApiServer::handleGetStatus() {
   if (ip == "0.0.0.0") { ssid = "(disconnected)"; ip = "-"; }
   char buf[256];
   snprintf(buf, sizeof(buf),
-    "{\"lcd\":true,\"brightness\":%d,"
+    "{\"lcd\":%s,\"brightness\":%d,"
     "\"wifi\":\"%s\",\"ssid\":\"%s\",\"ip\":\"%s\"}",
-    50, // placeholder — LCDDisplay doesn't expose brightness getter
+    _lcd.isOn() ? "true" : "false",
+    _lcd.getBrightness(),
     WiFi.isConnected() ? "connected" : "disconnected",
     ssid.c_str(), ip.c_str());
   sendJson(200, String(buf));

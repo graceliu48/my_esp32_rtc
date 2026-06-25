@@ -103,7 +103,7 @@ static const uint8_t font5x7[] = {
 
 LCDDisplay::LCDDisplay()
   : _cs(LCD_CS), _dc(LCD_DC), _rst(LCD_RST), _bl(LCD_BL),
-    _initialized(false), _brightness(100) {
+    _initialized(false), _isOn(true), _brightness(100) {
 }
 
 void LCDDisplay::begin() {
@@ -358,9 +358,11 @@ void LCDDisplay::updateTime(const String &dateStr, const String &timeStr,
 }
 
 void LCDDisplay::on() {
+  _isOn = true;
   writeCmd(0x29);
 }
 
 void LCDDisplay::off() {
+  _isOn = false;
   writeCmd(0x28);
 }
