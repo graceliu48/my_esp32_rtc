@@ -1,3 +1,10 @@
+#ifndef APP_HTML_H
+#define APP_HTML_H
+
+#include <Arduino.h>
+
+// index.html
+static const char APP_INDEX_HTML[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -11,7 +18,6 @@
 body { font-family: -apple-system, 'Segoe UI', sans-serif; background: #1a1a2e; color: #eee; min-height: 100vh; display: flex; flex-direction: column; }
 header { background: linear-gradient(135deg, #16213e, #0f3460); padding: 20px 16px; text-align: center; position: relative; }
 header h1 { font-size: 18px; font-weight: 600; color: #e94560; letter-spacing: 2px; }
-header .subtitle { font-size: 11px; color: #888; margin-top: 2px; }
 .conn-bar { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 8px; font-size: 12px; color: #aaa; }
 .conn-bar .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
 .conn-bar .dot.online { background: #4ecca3; box-shadow: 0 0 6px #4ecca3; }
@@ -37,10 +43,9 @@ header .subtitle { font-size: 11px; color: #888; margin-top: 2px; }
 .btn.success { background: #4ecca3; color: #1a1a2e; }
 .btn.warning { background: #e9a945; color: #1a1a2e; }
 .btn.outline { background: transparent; border: 1px solid #333; }
-.btn:disabled { opacity: .4; }
 .slider-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; }
 .slider-row label { font-size: 12px; color: #888; min-width: 56px; }
-.slider-row input[type=range] { flex: 1; accent-color: #e94560; height: 4px; }
+.slider-row input[type=range] { flex: 1; accent-color: #e94560; }
 .slider-row .val { font-size: 14px; color: #eee; min-width: 32px; text-align: right; }
 .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; }
 .toggle-row span { font-size: 13px; color: #ccc; }
@@ -57,9 +62,7 @@ header .subtitle { font-size: 11px; color: #888; margin-top: 2px; }
 .modal-actions { display: flex; gap: 8px; margin-top: 12px; }
 .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 10px 20px; border-radius: 8px; font-size: 13px; z-index: 200; opacity: 0; transition: .3s; pointer-events: none; }
 .toast.show { opacity: 1; }
-@media (min-width: 500px) {
-  .container { max-width: 440px; margin: 0 auto; }
-}
+@media (min-width: 500px) { .container { max-width: 440px; margin: 0 auto; } }
 </style>
 </head>
 <body>
@@ -73,29 +76,17 @@ header .subtitle { font-size: 11px; color: #888; margin-top: 2px; }
     <span id="deviceIp">-</span>
   </div>
 </header>
-
 <div class="clock">
   <div class="time" id="clockTime">--:--:--</div>
   <div class="date" id="clockDate">----年--月--日</div>
   <div class="weekday" id="clockWeekday">---</div>
   <div class="uptime" id="uptimeText">运行时间: --秒</div>
 </div>
-
 <div class="grid">
-  <div class="card">
-    <div class="label">WiFi</div>
-    <div class="value small" id="wifiStatus">-</div>
-  </div>
-  <div class="card">
-    <div class="label">LCD</div>
-    <div class="value small" id="lcdStatus">-</div>
-  </div>
-  <div class="card full">
-    <div class="label">亮度</div>
-    <div class="value small" id="brightnessVal">-</div>
-  </div>
+  <div class="card"><div class="label">WiFi</div><div class="value small" id="wifiStatus">-</div></div>
+  <div class="card"><div class="label">LCD</div><div class="value small" id="lcdStatus">-</div></div>
+  <div class="card full"><div class="label">亮度</div><div class="value small" id="brightnessVal">-</div></div>
 </div>
-
 <div class="controls">
   <h3>控制</h3>
   <div class="toggle-row">
@@ -117,7 +108,6 @@ header .subtitle { font-size: 11px; color: #888; margin-top: 2px; }
   </div>
 </div>
 </div>
-
 <div class="modal" id="timeModal">
   <div class="modal-content">
     <h3>手动校时</h3>
@@ -128,7 +118,6 @@ header .subtitle { font-size: 11px; color: #888; margin-top: 2px; }
     </div>
   </div>
 </div>
-
 <div class="modal" id="wifiModal">
   <div class="modal-content">
     <h3>WiFi 配置</h3>
@@ -140,166 +129,119 @@ header .subtitle { font-size: 11px; color: #888; margin-top: 2px; }
     </div>
   </div>
 </div>
-
 <div class="toast" id="toast"></div>
-
 <script>
 let baseUrl = '';
 let refreshTimer = null;
-let synced = false;
-
-function getBase() {
-  let ip = localStorage.getItem('esp_ip');
-  if (ip) return 'http://' + ip;
-  return 'http://dnesp32s3m.local';
-}
-
-function toast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.className = 'toast show';
-  setTimeout(() => t.className = 'toast', 2000);
-}
-
+function toast(m) { const t=document.getElementById('toast'); t.textContent=m; t.className='toast show'; setTimeout(()=>t.className='toast',2000); }
 async function api(method, path, body) {
-  const url = baseUrl + path;
   try {
     const opts = { method, headers: {} };
-    if (body) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
-    const r = await fetch(url, opts);
+    if (body) { opts.headers['Content-Type']='application/json'; opts.body=JSON.stringify(body); }
+    const r = await fetch(baseUrl + path, opts);
     return await r.json();
-  } catch (e) {
-    document.getElementById('connDot').className = 'dot offline';
-    document.getElementById('connText').textContent = '连接失败';
+  } catch(e) {
+    document.getElementById('connDot').className='dot offline';
+    document.getElementById('connText').textContent='连接失败';
     return null;
   }
 }
-
 async function fetchStatus() {
-  const data = await api('GET', '/api/status');
-  if (!data) return;
-  document.getElementById('wifiStatus').textContent = data.wifi === 'connected' ? `${data.ssid} (${data.ip})` : '未连接';
-  document.getElementById('lcdStatus').textContent = data.lcd ? '已开启' : '已关闭';
-  document.getElementById('brightnessVal').textContent = data.brightness + '%';
-
-  const toggle = document.getElementById('lcdToggle');
-  toggle.className = data.lcd ? 'toggle active' : 'toggle';
-  document.getElementById('brightnessSlider').value = data.brightness;
-  document.getElementById('brightnessLabel').textContent = data.brightness;
-
-  document.getElementById('connDot').className = 'dot online';
-  document.getElementById('connText').textContent = '已连接';
-  document.getElementById('deviceIp').textContent = data.ip;
+  const d = await api('GET','/api/status');
+  if (!d) return;
+  document.getElementById('wifiStatus').textContent = d.wifi==='connected' ? d.ssid+' ('+d.ip+')' : '未连接';
+  document.getElementById('lcdStatus').textContent = d.lcd ? '已开启' : '已关闭';
+  document.getElementById('brightnessVal').textContent = d.brightness+'%';
+  document.getElementById('lcdToggle').className = d.lcd ? 'toggle active' : 'toggle';
+  document.getElementById('brightnessSlider').value = d.brightness;
+  document.getElementById('brightnessLabel').textContent = d.brightness;
+  document.getElementById('connDot').className='dot online';
+  document.getElementById('connText').textContent='已连接';
+  document.getElementById('deviceIp').textContent=d.ip;
 }
-
 async function fetchTime() {
-  const data = await api('GET', '/api/time');
-  if (!data) return;
-  synced = data.synced;
-  if (data.synced) {
-    document.getElementById('clockTime').textContent = data.time;
-    document.getElementById('clockDate').textContent = data.date.replace(/-/g, '/');
-    document.getElementById('clockWeekday').textContent = data.weekday;
+  const d = await api('GET','/api/time');
+  if (!d) return;
+  if (d.synced) {
+    document.getElementById('clockTime').textContent = d.time;
+    document.getElementById('clockDate').textContent = d.date.replace(/-/g,'/');
+    document.getElementById('clockWeekday').textContent = d.weekday;
   } else {
-    document.getElementById('clockTime').textContent = '--:--:--';
-    document.getElementById('clockDate').textContent = '未同步';
-    document.getElementById('clockWeekday').textContent = '---';
+    document.getElementById('clockTime').textContent='--:--:--';
+    document.getElementById('clockDate').textContent='未同步';
+    document.getElementById('clockWeekday').textContent='---';
   }
-  const uptime = data.uptime;
-  if (uptime !== undefined) {
-    const h = Math.floor(uptime / 3600);
-    const m = Math.floor((uptime % 3600) / 60);
-    const s = uptime % 60;
-    document.getElementById('uptimeText').textContent = `运行时间: ${h}时${m}分${s}秒`;
+  if (d.uptime!==undefined) {
+    const h=Math.floor(d.uptime/3600), m=Math.floor((d.uptime%3600)/60), s=d.uptime%60;
+    document.getElementById('uptimeText').textContent='运行时间: '+h+'时'+m+'分'+s+'秒';
   }
 }
-
 async function toggleLcd() {
   const on = !document.getElementById('lcdToggle').className.includes('active');
-  const data = await api('POST', '/api/lcd', { on });
-  if (data && data.ok) {
-    document.getElementById('lcdToggle').className = data.lcd ? 'toggle active' : 'toggle';
-    document.getElementById('lcdStatus').textContent = data.lcd ? '已开启' : '已关闭';
-    toast(data.lcd ? 'LCD 已开启' : 'LCD 已关闭');
-  } else { toast('操作失败'); }
+  const d = await api('POST','/api/lcd',{on});
+  if (d&&d.ok) { document.getElementById('lcdToggle').className=d.lcd?'toggle active':'toggle'; document.getElementById('lcdStatus').textContent=d.lcd?'已开启':'已关闭'; toast(d.lcd?'LCD 已开启':'LCD 已关闭'); }
+  else toast('操作失败');
 }
-
-let brightnessDebounce = null;
-function setBrightness(val) {
-  document.getElementById('brightnessLabel').textContent = val;
-  clearTimeout(brightnessDebounce);
-  brightnessDebounce = setTimeout(async () => {
-    const data = await api('POST', '/api/brightness', { value: parseInt(val) });
-    if (data && data.ok) toast(`亮度: ${data.brightness}%`);
-  }, 300);
+let bd = null;
+function setBrightness(v) {
+  document.getElementById('brightnessLabel').textContent=v;
+  clearTimeout(bd); bd=setTimeout(async()=>{ const d=await api('POST','/api/brightness',{value:parseInt(v)}); if(d&&d.ok) toast('亮度: '+d.brightness+'%'); },300);
 }
-
-async function syncNtp() {
-  const data = await api('POST', '/api/sync', {});
-  if (data && data.ok) toast('NTP 同步已触发');
-  else toast('同步失败');
-}
-
+async function syncNtp() { const d=await api('POST','/api/sync',{}); if(d&&d.ok) toast('NTP 同步已触发'); else toast('同步失败'); }
 function showTimeModal() {
-  const now = new Date();
-  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-  document.getElementById('manualDatetime').value = local;
-  document.getElementById('timeModal').className = 'modal show';
+  const n=new Date(); document.getElementById('manualDatetime').value=new Date(n.getTime()-n.getTimezoneOffset()*60000).toISOString().slice(0,16);
+  document.getElementById('timeModal').className='modal show';
 }
-
 async function setTime() {
-  const val = document.getElementById('manualDatetime').value;
-  if (!val) return;
-  const dt = val.replace('T', ' ') + ':00';
-  const data = await api('POST', '/api/time', { datetime: dt });
-  if (data && data.ok) { toast('校时成功'); closeModal('timeModal'); fetchTime(); }
-  else toast('校时失败');
+  const v=document.getElementById('manualDatetime').value; if(!v) return;
+  const d=await api('POST','/api/time',{datetime:v.replace('T',' ')+':00'});
+  if(d&&d.ok) { toast('校时成功'); document.getElementById('timeModal').className='modal'; fetchTime(); } else toast('校时失败');
 }
-
-function showWifiModal() {
-  document.getElementById('wifiSsid').value = '';
-  document.getElementById('wifiPass').value = '';
-  document.getElementById('wifiModal').className = 'modal show';
-}
-
+function showWifiModal() { document.getElementById('wifiSsid').value=''; document.getElementById('wifiPass').value=''; document.getElementById('wifiModal').className='modal show'; }
 async function setWifi() {
-  const ssid = document.getElementById('wifiSsid').value.trim();
-  const pass = document.getElementById('wifiPass').value;
-  if (!ssid) { toast('请输入 SSID'); return; }
-  const data = await api('POST', '/api/wifi', { ssid, password: pass });
-  if (data && data.ok) { toast('WiFi 已配置，设备重启中...'); setTimeout(() => closeModal('wifiModal'), 500); }
-  else toast('配置失败');
+  const s=document.getElementById('wifiSsid').value.trim(), p=document.getElementById('wifiPass').value;
+  if(!s) { toast('请输入 SSID'); return; }
+  const d=await api('POST','/api/wifi',{ssid:s,password:p});
+  if(d&&d.ok) { toast('WiFi 已配置，设备重启中...'); setTimeout(()=>document.getElementById('wifiModal').className='modal',500); } else toast('配置失败');
 }
-
-function restart() {
-  if (!confirm('确定重启设备？')) return;
-  api('POST', '/api/restart', {}).then(d => {
-    if (d && d.ok) { toast('设备重启中...'); setTimeout(() => location.reload(), 5000); }
-  });
-}
-
-function closeModal(id) { document.getElementById(id).className = 'modal'; }
-
+function restart() { if(!confirm('确定重启设备？')) return; api('POST','/api/restart',{}).then(d=>{ if(d&&d.ok) { toast('设备重启中...'); setTimeout(()=>location.reload(),5000); }}); }
 function initConnection() {
-  if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
-    baseUrl = '';
-  } else {
-    const stored = localStorage.getItem('esp_ip');
-    if (stored) baseUrl = 'http://' + stored;
-    else baseUrl = 'http://dnesp32s3m.local';
-  }
-  fetchStatus();
-  fetchTime();
-  refreshTimer = setInterval(() => { fetchTime(); fetchStatus(); }, 3000);
+  if (window.location.protocol==='http:'||window.location.protocol==='https:') { baseUrl=''; }
+  else { const s=localStorage.getItem('esp_ip'); baseUrl=s?'http://'+s:'http://dnesp32s3m.local'; }
+  fetchStatus(); fetchTime(); refreshTimer=setInterval(()=>{ fetchTime(); fetchStatus(); },3000);
 }
-
-if (window.location.protocol !== 'http:' && window.location.protocol !== 'https:') {
-  if (!localStorage.getItem('esp_ip')) {
-    const ip = prompt('输入 ESP32 IP (如 192.168.1.100)，留空用 dnesp32s3m.local:');
-    if (ip && ip.trim()) localStorage.setItem('esp_ip', ip.trim());
-  }
+if (window.location.protocol!=='http:'&&window.location.protocol!=='https:') {
+  if (!localStorage.getItem('esp_ip')) { const ip=prompt('输入 ESP32 IP，留空用 dnesp32s3m.local:'); if(ip&&ip.trim()) localStorage.setItem('esp_ip',ip.trim()); }
 }
-
 document.addEventListener('DOMContentLoaded', initConnection);
 </script>
 </body>
 </html>
+)rawliteral";
+
+// manifest.json
+static const char APP_MANIFEST_JSON[] PROGMEM = R"rawliteral({
+  "name": "ESP32 RTC",
+  "short_name": "ESP32 RTC",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1a2e",
+  "theme_color": "#1a1a2e",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231a1a2e'/><text x='50' y='68' font-size='50' text-anchor='middle' fill='%23e94560'>⏰</text></svg>",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
+)rawliteral";
+
+// sw.js
+static const char APP_SW_JS[] PROGMEM = R"rawliteral(self.addEventListener('install',()=>self.skipWaiting());
+self.addEventListener('activate',e=>e.waitUntil(clients.claim()));
+self.addEventListener('fetch',e=>e.respondWith(fetch(e.request)));
+)rawliteral";
+
+#endif

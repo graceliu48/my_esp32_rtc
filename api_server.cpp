@@ -3,6 +3,7 @@
 #include "lcd_display.h"
 #include "wifi_manager.h"
 #include "rtc_config.h"
+#include "app_html.h"
 #include <WiFi.h>
 
 ApiServer::ApiServer(RTCManager &rtc, LCDDisplay &lcd, WiFiManager &wifi)
@@ -28,6 +29,15 @@ void ApiServer::begin() {
   _server.on("/api/restart", HTTP_POST, [this]() { handlePostRestart(); });
   _server.on("/api/wifi/clear", HTTP_POST, [this]() { handleOptions(); });
   _server.on("/api/scan", HTTP_GET, [this]() { handleOptions(); });
+
+  _server.on("/", HTTP_GET, [this]() { handleRoot(); });
+  _server.on("/index.html", HTTP_GET, [this]() { handleRoot(); });
+  _server.on("/manifest.json", HTTP_GET, [this]() {
+    _server.send_P(200, "application/json", APP_MANIFEST_JSON);
+  });
+  _server.on("/sw.js", HTTP_GET, [this]() {
+    _server.send_P(200, "application/javascript", APP_SW_JS);
+  });
 
   _server.onNotFound([this]() {
     _server.send(404, "application/json", "{\"error\":\"not found\"}");
@@ -194,4 +204,8 @@ void ApiServer::handlePostRestart() {
 
 void ApiServer::handleOptions() {
   _server.send(200, "application/json", "{}");
+}
+
+void ApiServer::handleRoot() {
+  _server.send_P(200, "text/html; charset=utf-8", APP_INDEX_HTML);
 }

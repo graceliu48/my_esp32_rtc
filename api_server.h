@@ -26,6 +26,7 @@ private:
   void handlePostWifi();
   void handlePostRestart();
   void handleOptions();
+  void handleRoot();
   void sendJson(int code, const String &json);
   String readBody();
   bool authCheck();
