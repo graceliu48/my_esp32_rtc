@@ -198,6 +198,7 @@ async function setTime() {
   if(d&&d.ok) { toast('校时成功'); document.getElementById('timeModal').className='modal'; fetchTime(); } else toast('校时失败');
 }
 function showWifiModal() { document.getElementById('wifiSsid').value=''; document.getElementById('wifiPass').value=''; document.getElementById('wifiModal').className='modal show'; }
+function closeModal(id) { document.getElementById(id).className='modal'; }
 async function setWifi() {
   const s=document.getElementById('wifiSsid').value.trim(), p=document.getElementById('wifiPass').value;
   if(!s) { toast('请输入 SSID'); return; }
