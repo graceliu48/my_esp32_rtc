@@ -103,7 +103,7 @@ static const uint8_t font5x7[] = {
 
 LCDDisplay::LCDDisplay()
   : _cs(LCD_CS), _dc(LCD_DC), _rst(LCD_RST), _bl(LCD_BL),
-    _initialized(false), _isOn(true), _brightness(100) {
+    _initialized(false), _isOn(false), _brightness(100) {
 }
 
 void LCDDisplay::begin() {
@@ -111,6 +111,7 @@ void LCDDisplay::begin() {
   pinMode(_dc, OUTPUT);
   pinMode(_rst, OUTPUT);
   pinMode(_bl, OUTPUT);
+  digitalWrite(_bl, LOW);
 
   digitalWrite(_cs, HIGH);
   digitalWrite(_rst, LOW);
@@ -126,14 +127,10 @@ void LCDDisplay::begin() {
 
   ledcSetup(0, 5000, 8);
   ledcAttachPin(_bl, 0);
-  ledcWrite(0, map(_brightness, 0, 100, 0, 255));
+  ledcWrite(0, 0);
 
   _initialized = true;
-  _isOn = true;
-  clear();
-  showSplash("DNESP32S3M", "RTC Clock");
-  delay(1500);
-  clear();
+  _isOn = false;
 }
 
 void LCDDisplay::initST7735() {
@@ -328,7 +325,7 @@ void LCDDisplay::showSplash(const String &line1, const String &line2) {
 
 void LCDDisplay::setBrightness(uint8_t level) {
   _brightness = constrain(level, 0, 100);
-  if (_initialized) {
+  if (_initialized && _isOn) {
     ledcWrite(0, map(_brightness, 0, 100, 0, 255));
   }
 }
@@ -361,9 +358,11 @@ void LCDDisplay::updateTime(const String &dateStr, const String &timeStr,
 void LCDDisplay::on() {
   _isOn = true;
   writeCmd(0x29);
+  ledcWrite(0, map(_brightness, 0, 100, 0, 255));
 }
 
 void LCDDisplay::off() {
   _isOn = false;
   writeCmd(0x28);
+  ledcWrite(0, 0);
 }
