@@ -11,7 +11,7 @@ static const char APP_INDEX_HTML[] PROGMEM = R"rawliteral(
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#1a1a2e">
-<title>ESP32 RTC</title>
+<title>RTC</title>
 <link rel="manifest" href="manifest.json">
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -68,7 +68,7 @@ header h1 { font-size: 18px; font-weight: 600; color: #e94560; letter-spacing: 2
 <body>
 <div class="container">
 <header>
-  <h1>ESP32 RTC</h1>
+  <h1>RTC</h1>
   <div class="conn-bar">
     <span id="connDot" class="dot offline"></span>
     <span id="connText">未连接</span>
@@ -222,8 +222,8 @@ document.addEventListener('DOMContentLoaded', initConnection);
 
 // manifest.json
 static const char APP_MANIFEST_JSON[] PROGMEM = R"rawliteral({
-  "name": "ESP32 RTC",
-  "short_name": "ESP32 RTC",
+  "name": "RTC",
+  "short_name": "RTC",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#1a1a2e",

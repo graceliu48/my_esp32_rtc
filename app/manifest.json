@@ -1,6 +1,6 @@
 {
-  "name": "ESP32 RTC",
-  "short_name": "ESP32 RTC",
+  "name": "RTC",
+  "short_name": "RTC",
   "start_url": "index.html",
   "display": "standalone",
   "background_color": "#1a1a2e",
