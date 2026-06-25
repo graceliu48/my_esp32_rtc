@@ -36,6 +36,8 @@ private:
   LCDDisplay &_lcd;
   WiFiManager &_wifi;
   bool _started;
+  bool _ntpPending;
+  unsigned long _ntpStart;
 };
 
 #endif

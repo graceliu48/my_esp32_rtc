@@ -7,7 +7,7 @@
 #include <WiFi.h>
 
 ApiServer::ApiServer(RTCManager &rtc, LCDDisplay &lcd, WiFiManager &wifi)
-  : _server(API_PORT), _rtc(rtc), _lcd(lcd), _wifi(wifi), _started(false) {
+  : _server(API_PORT), _rtc(rtc), _lcd(lcd), _wifi(wifi), _started(false), _ntpPending(false), _ntpStart(0) {
 }
 
 void ApiServer::begin() {
@@ -49,7 +49,20 @@ void ApiServer::begin() {
 }
 
 void ApiServer::loop() {
-  if (_started) _server.handleClient();
+  if (_started) {
+    _server.handleClient();
+    if (_ntpPending) {
+      struct tm t;
+      if (::getLocalTime(&t, 0) && t.tm_year >= (2024 - 1900)) {
+        _rtc.setDateTime(t.tm_year + 1900, t.tm_mon + 1, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec);
+        _ntpPending = false;
+        Serial.println("[API] NTP 后台同步成功");
+      } else if (millis() - _ntpStart > 10000) {
+        _ntpPending = false;
+        Serial.println("[API] NTP 后台同步超时");
+      }
+    }
+  }
 }
 
 void ApiServer::stop() {
@@ -145,8 +158,11 @@ void ApiServer::handlePostBrightness() {
 }
 
 void ApiServer::handlePostSync() {
-  sendJson(200, "{\"ok\":true,\"msg\":\"NTP sync triggered\"}");
-  Serial.println("[API] NTP sync requested (will retry next loop)");
+  configTime(TIMEZONE_OFFSET_SEC, 0, NTP_SERVER1, NTP_SERVER2, NTP_SERVER3);
+  _ntpPending = true;
+  _ntpStart = millis();
+  sendJson(200, "{\"ok\":true,\"msg\":\"NTP syncing...\"}");
+  Serial.println("[API] NTP 后台同步已触发");
 }
 
 void ApiServer::handlePostTime() {
