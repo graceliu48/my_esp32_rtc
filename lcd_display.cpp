@@ -129,6 +129,7 @@ void LCDDisplay::begin() {
   ledcWrite(0, map(_brightness, 0, 100, 0, 255));
 
   _initialized = true;
+  _isOn = true;
   clear();
   showSplash("DNESP32S3M", "RTC Clock");
   delay(1500);
