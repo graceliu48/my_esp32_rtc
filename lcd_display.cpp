@@ -103,7 +103,7 @@ static const uint8_t font5x7[] = {
 
 LCDDisplay::LCDDisplay()
   : _cs(LCD_CS), _dc(LCD_DC), _rst(LCD_RST), _bl(LCD_BL),
-    _initialized(false), _isOn(false), _brightness(100) {
+    _initialized(false), _isOn(true), _brightness(100) {
 }
 
 void LCDDisplay::begin() {
@@ -131,7 +131,7 @@ void LCDDisplay::begin() {
 
   _initialized = true;
   clear();
-  _isOn = false;
+  on();
 }
 
 void LCDDisplay::initST7735() {
@@ -362,10 +362,12 @@ void LCDDisplay::on() {
   _isOn = true;
   writeCmd(0x29);
   ledcWrite(0, map(_brightness, 0, 100, 0, 255));
+  digitalWrite(IO5_OUTPUT, LOW);
 }
 
 void LCDDisplay::off() {
   _isOn = false;
   writeCmd(0x28);
   ledcWrite(0, 0);
+  digitalWrite(IO5_OUTPUT, HIGH);
 }
