@@ -130,6 +130,7 @@ void LCDDisplay::begin() {
   ledcWrite(0, 0);
 
   _initialized = true;
+  clear();
   _isOn = false;
 }
 
