@@ -229,7 +229,7 @@ void loop() {
   }
 
   static bool lastIO4 = HIGH;
-  static bool lcdFlag = false;
+  static bool lcdFlag = true;
   static unsigned long io4Debounce = 0;
   bool curIO4 = digitalRead(IO4_INPUT);
   if (lastIO4 == HIGH && curIO4 == LOW && timerMillis() - io4Debounce > 50) {
