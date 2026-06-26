@@ -222,7 +222,6 @@ void LCDDisplay::fillRect(int16_t x, int16_t y, int16_t w, int16_t h,
   if (y + h > LCD_HEIGHT) h = LCD_HEIGHT - y;
   if (w <= 0 || h <= 0) return;
 
-  setAddrWindow(x, y, x + w - 1, y + h - 1);
   uint32_t pixels = w * h;
   uint8_t hi = color >> 8, lo = color & 0xFF;
 
@@ -231,15 +230,15 @@ void LCDDisplay::fillRect(int16_t x, int16_t y, int16_t w, int16_t h,
     buf[i] = hi;
     buf[i + 1] = lo;
   }
-  {
-    digitalWrite(_cs, LOW);
-    while (pixels > 32) {
-      _spi.writeBytes(buf, 64);
-      pixels -= 32;
-    }
-    _spi.writeBytes(buf, pixels * 2);
-    digitalWrite(_cs, HIGH);
+
+  digitalWrite(_cs, LOW);
+  setAddrWindow(x, y, x + w - 1, y + h - 1);
+  while (pixels > 32) {
+    _spi.writeBytes(buf, 64);
+    pixels -= 32;
   }
+  _spi.writeBytes(buf, pixels * 2);
+  digitalWrite(_cs, HIGH);
 }
 
 void LCDDisplay::clear(uint16_t color) {
