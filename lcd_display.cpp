@@ -199,13 +199,19 @@ void LCDDisplay::writeBuf(uint8_t *buf, uint32_t len) {
 
 void LCDDisplay::setAddrWindow(uint16_t x0, uint16_t y0,
                                 uint16_t x1, uint16_t y1) {
-  writeCmd(0x2A);
-  writeData16(x0 + 1);
-  writeData16(x1 + 1);
-  writeCmd(0x2B);
-  writeData16(y0 + 26);
-  writeData16(y1 + 26);
-  writeCmd(0x2C);
+  digitalWrite(_dc, LOW);
+  _spi.write(0x2A);
+  digitalWrite(_dc, HIGH);
+  _spi.write16(x0 + 1);
+  _spi.write16(x1 + 1);
+  digitalWrite(_dc, LOW);
+  _spi.write(0x2B);
+  digitalWrite(_dc, HIGH);
+  _spi.write16(y0 + 26);
+  _spi.write16(y1 + 26);
+  digitalWrite(_dc, LOW);
+  _spi.write(0x2C);
+  digitalWrite(_dc, HIGH);
 }
 
 void LCDDisplay::fillRect(int16_t x, int16_t y, int16_t w, int16_t h,
@@ -220,21 +226,20 @@ void LCDDisplay::fillRect(int16_t x, int16_t y, int16_t w, int16_t h,
   uint32_t pixels = w * h;
   uint8_t hi = color >> 8, lo = color & 0xFF;
 
-  digitalWrite(_dc, HIGH);
-  digitalWrite(_cs, LOW);
-
   uint8_t buf[64];
   for (uint32_t i = 0; i < 64; i += 2) {
     buf[i] = hi;
     buf[i + 1] = lo;
   }
-  while (pixels > 32) {
-    _spi.writeBytes(buf, 64);
-    pixels -= 32;
+  {
+    digitalWrite(_cs, LOW);
+    while (pixels > 32) {
+      _spi.writeBytes(buf, 64);
+      pixels -= 32;
+    }
+    _spi.writeBytes(buf, pixels * 2);
+    digitalWrite(_cs, HIGH);
   }
-  _spi.writeBytes(buf, pixels * 2);
-
-  digitalWrite(_cs, HIGH);
 }
 
 void LCDDisplay::clear(uint16_t color) {
@@ -243,9 +248,8 @@ void LCDDisplay::clear(uint16_t color) {
 }
 
 void LCDDisplay::drawMonochromeBitmap(int16_t x, int16_t y, int16_t w, int16_t h, const uint8_t *data, uint16_t color) {
-  setAddrWindow(x, y, x + w - 1, y + h - 1);
-  digitalWrite(_dc, HIGH);
   digitalWrite(_cs, LOW);
+  setAddrWindow(x, y, x + w - 1, y + h - 1);
   int16_t bpr = (w + 7) / 8;
   for (int16_t row = 0; row < h; row++) {
     for (int16_t col = 0; col < w; col++) {
@@ -280,9 +284,8 @@ void LCDDisplay::drawChar(int16_t x, int16_t y, char c,
   c -= 0x20;
 
   int16_t w = 5 * size, h = 7 * size;
-  setAddrWindow(x, y, x + w - 1, y + h - 1);
-  digitalWrite(_dc, HIGH);
   digitalWrite(_cs, LOW);
+  setAddrWindow(x, y, x + w - 1, y + h - 1);
 
   for (int8_t row = 0; row < 7; row++) {
     for (uint8_t sy = 0; sy < size; sy++) {
